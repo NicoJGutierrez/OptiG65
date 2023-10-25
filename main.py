@@ -3,8 +3,11 @@ from gurobipy import Model, GRB, quicksum
 
 print(CSV.leer_csv("Hola mundo"))
 
+presupuesto = input("Elija un presupuesto para el proyecto (en miles de pesos)")
+
 nodos = CSV.leer_csv()
 # 0 = id, 1 = nombre, 2 = precio estación, 3 = población, 4...n = precio de armar un arco entre el nodo de id (i-2) y este.
+# Los precios deben estar en miles de pesos
 
 # Generar el modelo
 model = Model()
