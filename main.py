@@ -4,7 +4,7 @@ from gurobipy import Model, GRB, quicksum
 print(CSV.leer_csv("Hola mundo"))
 
 nodos = CSV.leer_csv()
-# 0 = id, 1 = nombre, 2 = precio estación, 3...n = precio de armar un arco entre el nodo de id (i-2) y este.
+# 0 = id, 1 = nombre, 2 = precio estación, 3 = población, 4...n = precio de armar un arco entre el nodo de id (i-2) y este.
 
 # Generar el modelo
 model = Model()
