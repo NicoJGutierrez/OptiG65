@@ -29,6 +29,8 @@ y = {}
 for i in nodos:
     y[i] = model.addVar(vtype = GRB.BINARY, name= f"y_({i[1]})")
 
+
+# ========
 # Número de estaciones que tengo en el sistema (tiene que estar sobre el número de estaciones que tengo construídas)
 N = model.addVar(vtype = GRB.CONTINUOUS, name="N_estaciones")
 
@@ -37,6 +39,7 @@ V = {}
 for i in nodos:
     V[i] = model.addVar(vtype = GRB.CONTINUOUS, name=f"Visitas_{i[1]}")
 
+# ========
 
 
 # Llamamos a update
@@ -64,13 +67,18 @@ model.addConstr(
     <= presupuesto, f"Costos")
 # Las conexiones no se generan dos veces por la restricción anterior
 
-# Los nodos tienen máximo 1 antecesor
+
+# ===
+# Los nodos tienen máximo 1 antecesor o tienen 0 si no tienen estación
 for i in nodos:
     model.addConstr((quicksum(x[j, i]) * y[i] <= 1) for j in nodos if i != j)
 
-# Sólo hay un nodo que tiene estación y no tiene antecesor (o menos)
+# Si no eres nodo inicial, tienes al menos 1 antecesor
 model.addConstr((quicksum((x[j, i] == 0)*y[i]) for i, j in nodos if i != j) <= 1, f"Nodo_sin_antecesor")
 
+# El número de nodos iniciales es 1 + los nodos que no están conectados
+# (FALTANTE)
+# ===
 
 # Funcion Objetivo y optimizar el problema:
 
