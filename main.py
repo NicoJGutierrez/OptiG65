@@ -8,7 +8,7 @@ presupuesto = input("Elija un presupuesto para el proyecto (en miles de pesos)")
 nodos = CSV.leer_csv()
 # 0 = id, 1 = nombre, 2 = precio estación, 3 = población, 4...n = precio de armar un arco entre el nodo de id (i-2) y este.
 # Los precios deben estar en miles de pesos
-# IMPORTANTE: LOS COSTOS REPETIDOS DEBEN SER 0.
+# IMPORTANTE: LOS COSTOS REPETIDOS DEBEN SER IGUALES A LOS ORIGINALES.
 
 # Generar el modelo
 model = Model()
@@ -42,8 +42,16 @@ for i in nodos:
 # Llamamos a update
 model.update()
 
-# Restricciones
-# Evitar ciclos de 2 nodos (los arcos son bidireccionales)
+# Restricciones:
+
+# Sólo puede haber un camino entre 2 nodos que tienen estaciones
+for i in nodos:
+    for j in nodos:
+        # Para que haya una conexión de i a j:
+        model.addConstr((x[i, j] <= y[i]), f"ruta_{i[1]}_{j[1]}_estacion_{i[1]}") # Tiene que haber estación en i
+        model.addConstr((x[i, j] <= y[j]), f"ruta_{i[1]}_{j[1]}_estacion_{j[1]}") # Tiene que haber estación en j
+
+# Evitar ciclos de 2 nodos (los arcos no son bidireccionales)
 for i in nodos:
     for j in nodos:
         if i != j:
@@ -54,12 +62,14 @@ model.addConstr(
     (quicksum(x[i, j] * (i[j[0] + 4])) for i, j in nodos if i != j) # Conexiones
     + (quicksum(y[i]*i[2]) for i in nodos) # Estaciones
     <= presupuesto, f"Costos")
-# Las conexiones no se generan dos veces porque se asume que las conexiones repetidas valen 0
-# y aparece aplicada la restricción de que no generen loops
+# Las conexiones no se generan dos veces por la restricción anterior
 
+# Los nodos tienen máximo 1 antecesor
+for i in nodos:
+    model.addConstr((quicksum(x[j, i]) * y[i] <= 1) for j in nodos if i != j)
 
-# Se cumple que de un nodo conectado puedo tirar una señal igual a los nodos conectados menos uno
-# y esa señal va a ser demandada por todos los demás nodos.
+# Sólo hay un nodo que no tiene antecesor (o menos)
+model.addConstr((quicksum(x[j, i] == 0) for i, j in nodos if i != j) <= 1, f"")
 
 
 # Funcion Objetivo y optimizar el problema:
