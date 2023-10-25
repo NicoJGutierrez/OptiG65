@@ -68,8 +68,8 @@ model.addConstr(
 for i in nodos:
     model.addConstr((quicksum(x[j, i]) * y[i] <= 1) for j in nodos if i != j)
 
-# Sólo hay un nodo que no tiene antecesor (o menos)
-model.addConstr((quicksum(x[j, i] == 0) for i, j in nodos if i != j) <= 1, f"")
+# Sólo hay un nodo que tiene estación y no tiene antecesor (o menos)
+model.addConstr((quicksum((x[j, i] == 0)*y[i]) for i, j in nodos if i != j) <= 1, f"Nodo_sin_antecesor")
 
 
 # Funcion Objetivo y optimizar el problema:
