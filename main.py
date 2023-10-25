@@ -12,8 +12,9 @@ nodos = CSV.leer_csv()
 
 # Generar el modelo
 model = Model()
-
 # Se instancian variables de decision
+model.setParam("TimeLimit", 300)
+# Se determina un tiempo máximo para el algoritmo, en este caso, 5 minutos
 
 # Existe conexión directa entre 2 estaciones?
 x = {}
@@ -39,7 +40,7 @@ for i in nodos:
 
 
 # Llamamos a update
-
+model.update()
 
 # Restricciones
 # Evitar ciclos de 2 nodos (los arcos son bidireccionales)
@@ -70,3 +71,6 @@ model.setObjective(quicksum((y[i] * i[3]) for i in nodos), GRB.MAXIMIZE)
 model.optimize()
 
 # Todavía no sé como imprimir la solución
+tiempo_ejecucion = model.Runtime
+print(tiempo_ejecucion)
+valor_objetivo = model.ObjVal
