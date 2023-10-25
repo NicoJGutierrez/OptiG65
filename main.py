@@ -35,6 +35,8 @@ V = {}
 for i in nodos:
     V[i] = model.addVar(vtype = GRB.CONTINUOUS, name=f"Visitas_{i[1]}")
 
+
+
 # Llamamos a update
 
 
@@ -47,6 +49,8 @@ for i in nodos:
 
 
 # Funcion Objetivo y optimizar el problema:
+
+model.setObjective(quicksum((y[i] * i[3]) for i in nodos), GRB.MAXIMIZE)
 
 # Falta la función objetivo
 model.optimize()
