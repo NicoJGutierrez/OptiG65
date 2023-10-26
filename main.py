@@ -80,7 +80,6 @@ model.addConstr((quicksum(Ni[i]) for i in nodos) == 1 + ((quicksum(1 - y[i])) fo
 model.setObjective(quicksum((y[i] * i[3]) for i in nodos), GRB.MAXIMIZE) 
 #maximizar la suma de las estaciones puestas por la población en ellas
 
-# Falta la función objetivo
 model.optimize()
 
 # Todavía no sé como imprimir la solución
@@ -88,3 +87,4 @@ tiempo_ejecucion = model.Runtime
 print(tiempo_ejecucion)
 valor_objetivo = model.ObjVal
 print(valor_objetivo)
+print("banana")
