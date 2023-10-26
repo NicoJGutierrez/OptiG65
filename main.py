@@ -21,7 +21,7 @@ x = {}
 for i in nodos:
     for j in nodos:
         if i != j: # Restricción de nodos no iguales
-            x[i,j] = model.addVar(vtype = GRB.BINARY, name=f"x_{i[1]}_{j[1]}") # 0 tiene que ser el nombre de la ciudad
+            x[i,j] = model.addVar(vtype = GRB.BINARY, name=f"x_{i[1]}_{j[1]}") # 1 tiene que ser el nombre de la ciudad
             # x = conexión
 
 # Hay una estación en un nodo i?
@@ -30,16 +30,12 @@ for i in nodos:
     y[i] = model.addVar(vtype = GRB.BINARY, name= f"y_({i[1]})")
 
 
-# ========
-# Número de estaciones que tengo en el sistema (tiene que estar sobre el número de estaciones que tengo construídas)
-N = model.addVar(vtype = GRB.CONTINUOUS, name="N_estaciones")
-
-# Número de nodos que puedo visitar desde cada nodo
-V = {}
+# Es i un nodo inicial? (los nodos desconectados son iniciales y hay uno solo conectado e inicial)
+Ni = {}
 for i in nodos:
-    V[i] = model.addVar(vtype = GRB.CONTINUOUS, name=f"Visitas_{i[1]}")
+    Ni[i] = model.addVar(vtype = GRB.BINARY, name= f"Ni_({i[1]})")
 
-# ========
+
 
 
 # Llamamos a update
@@ -68,24 +64,22 @@ model.addConstr(
 # Las conexiones no se generan dos veces por la restricción anterior
 
 
-# ===
-# Los nodos tienen máximo 1 antecesor o tienen 0 si no tienen estación
+# Los nodos tienen máximo 1 antecesor y tienen 0 si no tienen estación
 for i in nodos:
-    model.addConstr((quicksum(x[j, i]) * y[i] <= 1) for j in nodos if i != j)
+    model.addConstr((quicksum(x[j, i]) for j in nodos if i != j) <= y[i], f"Un_antecesor_{i[1]}")
 
-# Si no eres nodo inicial, tienes al menos 1 antecesor
-model.addConstr((quicksum((x[j, i] == 0)*y[i]) for i, j in nodos if i != j) <= 1, f"Nodo_sin_antecesor")
+# Los nodos con al menos 1 antecesor son todos los nodos no iniciales
+for i in nodos:
+    model.addConstr((quicksum(x[j, i]) for j in nodos if i != j) >= (1 - Ni[i]), f"not_Ni_tiene_antecesor_{i[1]}")
 
 # El número de nodos iniciales es 1 + los nodos que no están conectados
-# (FALTANTE)
-# ===
+model.addConstr((quicksum(Ni[i]) for i in nodos) == 1 + ((quicksum(1 - y[i])) for i in nodos), f"Nodo_sin_antecesor")
 
 # Funcion Objetivo y optimizar el problema:
 
 model.setObjective(quicksum((y[i] * i[3]) for i in nodos), GRB.MAXIMIZE) 
 #maximizar la suma de las estaciones puestas por la población en ellas
 
-# Falta la función objetivo
 model.optimize()
 
 # Todavía no sé como imprimir la solución
@@ -93,3 +87,4 @@ tiempo_ejecucion = model.Runtime
 print(tiempo_ejecucion)
 valor_objetivo = model.ObjVal
 print(valor_objetivo)
+print("banana")
