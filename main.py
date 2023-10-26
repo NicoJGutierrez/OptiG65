@@ -87,3 +87,4 @@ model.optimize()
 tiempo_ejecucion = model.Runtime
 print(tiempo_ejecucion)
 valor_objetivo = model.ObjVal
+print(valor_objetivo)
