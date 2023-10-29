@@ -2,11 +2,11 @@ import leerCSV as CSV
 from gurobipy import Model, GRB, quicksum
 from itertools import combinations
 
-presupuesto = 2000
+presupuesto = 3000
 #input("Elija un presupuesto para el proyecto (en millones de pesos)")
 
 # constante arbitrariamente grande:
-ctte = 9999999999
+ctte = 9999
 
 nodos = CSV.leer_csv("Datos.csv")
 nodos[0][0] = '0'
@@ -26,13 +26,14 @@ model.setParam("TimeLimit", 300)
 
 # Existe conexión directa entre 2 estaciones?
 x = {}
+FLOW = {}
 for i in nodos:
     for j in nodos:
         if i != j: # Restricción de nodos no iguales
             x[i[0],j[0]] = model.addVar(vtype = GRB.BINARY, name=f"x_{i[1]}_{j[1]}") # 1 tiene que ser el nombre de la ciudad
             # x = conexión
             # flujo:
-            FLOW = model.addVar(vtype = GRB.CONTINUOUS, name= f"FLOW_{i[1]}_{j[1]}")
+            FLOW[i[0],j[0]] = model.addVar(vtype = GRB.CONTINUOUS, name= f"FLOW_{i[1]}_{j[1]}")
 
 # Hay una estación en un nodo i?
 y = {}
@@ -116,12 +117,22 @@ model.addConstr(quicksum(Ni[i[0]] for i in nodos) == 1 + NCS, f"Nodo_sin_anteces
 # SIN CICLOS
 # ===================
 
-# Flujo de salida = flujo de salida
+# Flujo solo a receptor válido
+for i in nodos:
+    for j in nodos:
+        if j != i:
+            model.addConstr(FLOW[i[0], j[0]] <= ctte * x[i[0],j[0]], f"Flujo_solo_a_receptor_${i[1]}_${j[1]}")
+            model.addConstr(0 <= FLOW[i[0], j[0]], f"Flujo_no_negativo_${i[1]}_${j[1]}")
 
-# Flujo de entrada = flujo de entrada
 
-# El flujo que sale/entra de un nodo es la suma de las salidas y las entradas con la capacidad
-model.addConstr(quicksum(Ni[i[0]] for i in nodos) == 1 + NCS, f"Nodo_sin_antecesor")
+
+for i in nodos:
+    if i[0] != 0:
+        # Demanda en la red
+        model.addConstr(quicksum(FLOW[j[0], i[0]] for j in nodos if i != j) - y[i[0]] == quicksum(FLOW[i[0], j[0]] for j in nodos if i != j), f"Nodo_receptor_${i[1]}")
+    else:
+        # Oferta en la red
+        model.addConstr(quicksum(FLOW[i[0], j[0]] for j in nodos if i != j) == quicksum(y[i[0]] for i in nodos) - 1, f"Nodo_inicial")
 
 # El nodo sin antecesores pero con sucesores tiene capacidad = número de nodos -1
 
@@ -129,8 +140,9 @@ model.addConstr(quicksum(Ni[i[0]] for i in nodos) == 1 + NCS, f"Nodo_sin_anteces
 
 # Los nodos no conectados tienen capacidad = 0
 
-# Funcion Objetivo y optimizar el problema:
+# ===================
 
+# Funcion Objetivo y optimizar el problema:
 model.setObjective(quicksum((y[i[0]] * i[3]) for i in nodos), GRB.MAXIMIZE) 
 #maximizar la suma de las estaciones puestas por la población en ellas
 
@@ -148,17 +160,20 @@ k = 0
 for i in nodos:
     for j in nodos:
         if i != j:
-            if x[i[0],j[0]].x == 1.0:
+            if x[i[0],j[0]].x >= 0.5:
                 k += 1
-                print(f"{k}) Conex {i[1]} con {j[1]}")
+                print(f"{k}) Conex {i[1]} con {j[1]} ({x[i[0],j[0]].x})")
+            if FLOW[i[0],j[0]].x >= 0.5:
+                pass
+                print(f"Flujo {i[1]} con {j[1]} = {FLOW[i[0],j[0]].x}")
 
 # Print the values of y[i]
 print(f"{q}\nEstaciones:\n{q}")
 k = 0
 for i in nodos:
-    if y[i[0]].x == 1.0:
+    if y[i[0]].x >= 0.5:
         k += 1
-        print(f"{k}) Estación en {i[1]}")
+        print(f"{k}) Estación en {i[1]} ({y[i[0]].x})")
 
 print(f"{q}")
 
