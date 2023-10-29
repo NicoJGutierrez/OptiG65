@@ -2,7 +2,8 @@ import leerCSV as CSV
 from gurobipy import Model, GRB, quicksum
 from itertools import combinations
 
-presupuesto = 3000
+presupuesto = 5000
+indice_nodo_inicial = 2
 #input("Elija un presupuesto para el proyecto (en millones de pesos)")
 
 # constante arbitrariamente grande:
@@ -127,7 +128,7 @@ for i in nodos:
 
 
 for i in nodos:
-    if i[0] != 0:
+    if i[0] != indice_nodo_inicial:
         # Demanda en la red
         model.addConstr(quicksum(FLOW[j[0], i[0]] for j in nodos if i != j) - y[i[0]] == quicksum(FLOW[i[0], j[0]] for j in nodos if i != j), f"Nodo_receptor_${i[1]}")
     else:
@@ -165,7 +166,7 @@ for i in nodos:
                 print(f"{k}) Conex {i[1]} con {j[1]} ({x[i[0],j[0]].x})")
             if FLOW[i[0],j[0]].x >= 0.5:
                 pass
-                print(f"Flujo {i[1]} con {j[1]} = {FLOW[i[0],j[0]].x}")
+                #print(f"Flujo {i[1]} con {j[1]} = {FLOW[i[0],j[0]].x}")
 
 # Print the values of y[i]
 print(f"{q}\nEstaciones:\n{q}")
