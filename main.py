@@ -1,8 +1,12 @@
 import leerCSV as CSV
 from gurobipy import Model, GRB, quicksum
+from itertools import combinations
 
-presupuesto = 5000
+presupuesto = 2000
 #input("Elija un presupuesto para el proyecto (en millones de pesos)")
+
+# constante arbitrariamente grande:
+ctte = 9999999999
 
 nodos = CSV.leer_csv("Datos.csv")
 nodos[0][0] = '0'
@@ -27,6 +31,8 @@ for i in nodos:
         if i != j: # Restricción de nodos no iguales
             x[i[0],j[0]] = model.addVar(vtype = GRB.BINARY, name=f"x_{i[1]}_{j[1]}") # 1 tiene que ser el nombre de la ciudad
             # x = conexión
+            # flujo:
+            FLOW = model.addVar(vtype = GRB.CONTINUOUS, name= f"FLOW_{i[1]}_{j[1]}")
 
 # Hay una estación en un nodo i?
 y = {}
@@ -55,6 +61,7 @@ CAy = model.addVar(vtype = GRB.CONTINUOUS, name= f"CAy")
 
 # Cantidad de estaciones no conectadas:
 NCS = model.addVar(vtype = GRB.CONTINUOUS, name= f"NCS")
+
 
 # Llamamos a update
 model.update()
@@ -104,6 +111,23 @@ for i in nodos:
 
 # El número de nodos iniciales es 1 + los nodos que no están conectados
 model.addConstr(quicksum(Ni[i[0]] for i in nodos) == 1 + NCS, f"Nodo_sin_antecesor")
+
+# ===================
+# SIN CICLOS
+# ===================
+
+# Flujo de salida = flujo de salida
+
+# Flujo de entrada = flujo de entrada
+
+# El flujo que sale/entra de un nodo es la suma de las salidas y las entradas con la capacidad
+model.addConstr(quicksum(Ni[i[0]] for i in nodos) == 1 + NCS, f"Nodo_sin_antecesor")
+
+# El nodo sin antecesores pero con sucesores tiene capacidad = número de nodos -1
+
+# El resto de los nodos que tienen un antecesor tienen capacidad = -1
+
+# Los nodos no conectados tienen capacidad = 0
 
 # Funcion Objetivo y optimizar el problema:
 
