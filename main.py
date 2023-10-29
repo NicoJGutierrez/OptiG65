@@ -5,6 +5,9 @@ presupuesto = input("Elija un presupuesto para el proyecto (en miles de pesos)")
 
 nodos = CSV.leer_csv("Datos.csv")
 nodos[0][0] = '0'
+
+for i in nodos:
+    i[0] = int(i[0])
 # print(nodos)
 # 0 = id, 1 = nombre, 2 = precio estación, 3 = población, 4...n = precio de armar un arco entre el nodo de id (i-2) y este.
 # Los precios deben estar en miles de pesos
@@ -46,9 +49,11 @@ model.update()
 # Sólo puede haber un camino entre 2 nodos que tienen estaciones
 for i in nodos:
     for j in nodos:
-        # Para que haya una conexión de i a j:
-        model.addConstr((x[i[0], j[0]] <= y[i[0]]), f"ruta_{i[1]}_{j[1]}_estacion_{i[1]}") # Tiene que haber estación en i
-        model.addConstr((x[i[0], j[0]] <= y[j[0]]), f"ruta_{i[1]}_{j[1]}_estacion_{j[1]}") # Tiene que haber estación en j
+        if i != j:
+            #print(f"i[0]: {i[0]}, j[0]: {j[0]}")
+            # Para que haya una conexión de i a j:
+            model.addConstr((x[i[0], j[0]] <= y[i[0]]), f"ruta_{i[1]}_{j[1]}_estacion_{i[1]}") # Tiene que haber estación en i
+            model.addConstr((x[i[0], j[0]] <= y[j[0]]), f"ruta_{i[1]}_{j[1]}_estacion_{j[1]}") # Tiene que haber estación en j
 
 # Evitar ciclos de 2 nodos (los arcos no son bidireccionales)
 for i in nodos:
@@ -83,6 +88,21 @@ model.setObjective(quicksum((y[i[0]] * i[3]) for i in nodos), GRB.MAXIMIZE)
 model.optimize()
 
 # Todavía no sé como imprimir la solución
+
+# Imprimir solución
+
+# Print the values of x[i,j]
+for i in nodos:
+    for j in nodos:
+        if i != j:
+            print(f"x_{i[1]}_{j[1]} =", x[i[0],j[0]].x)
+
+# Print the values of y[i]
+for i in nodos:
+    print(f"y_({i[1]}) =", y[i[0]].x)
+
+
+
 tiempo_ejecucion = model.Runtime
 print(tiempo_ejecucion)
 valor_objetivo = model.ObjVal
