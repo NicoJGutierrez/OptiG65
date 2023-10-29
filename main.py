@@ -38,8 +38,19 @@ Ni = {}
 for i in nodos:
     Ni[i[0]] = model.addVar(vtype = GRB.BINARY, name= f"Ni_({i[1]})")
 
+# Costo de conexiones de i:
+Cx = {}
+for i in nodos:
+    Cx[i[0]] = model.addVar(vtype = GRB.CONTINUOUS, name= f"Cx_({i[1]})")
+    #(quicksum(x[i[0], j[0]] * (i[(int(j[0]) + 4)])) for j in nodos if i != j)
 
+# Costo de todas las conexiones:
+CAx = model.addVar(vtype = GRB.CONTINUOUS, name= f"CAx")
+#(quicksum(Cx[i[0]]) for i in nodos)
 
+# Costo de todas las estaciones:
+CAy = model.addVar(vtype = GRB.CONTINUOUS, name= f"CAy")
+#(quicksum(y[i[0]]) for i in nodos)
 
 # Llamamos a update
 model.update()
@@ -61,24 +72,31 @@ for i in nodos:
         if i != j:
             model.addConstr(x[i[0], j[0]] + x[j[0], i[0]] <= 1, f"no_ciclo_{i[1]}_{j[1]}")
 
+# El costo de todas las conexiones de una estación es la suma de todos esos costos
+for i in nodos:
+    model.addConstr(quicksum(x[i[0], j[0]] * (i[(int(j[0]) + 4)])for j in nodos if i != j) == Cx[i[0]], f"Rest Cx")
+
+# El costo de todas las conexiones de todas las estaciones es la suma de esos costos
+model.addConstr(quicksum(Cx[i[0]] for i in nodos) == CAx, f"Rest CAx")
+
+# El costo de todas las estaciones es la suma de esos costos
+model.addConstr(quicksum(y[i[0]] for i in nodos) == CAy, f"Rest CAy")
+
 # El costo total es menor al presupuesto
-model.addConstr(
-    (quicksum(x[i[0], j[0]] * (i[j[0] + 4])) for i, j in nodos if i != j) # Conexiones
-    + (quicksum(y[i[0]]*i[2]) for i in nodos) # Estaciones
-    <= presupuesto, f"Costos")
+model.addConstr(CAx + CAy <= presupuesto, f"Rest Costos")
 # Las conexiones no se generan dos veces por la restricción anterior
 
 
 # Los nodos tienen máximo 1 antecesor y tienen 0 si no tienen estación
 for i in nodos:
-    model.addConstr((quicksum(x[j[0], i[0]]) for j in nodos if i != j) <= y[i[0]], f"Un_antecesor_{i[1]}")
+    model.addConstr(quicksum(x[j[0], i[0]] for j in nodos if i != j) <= y[i[0]], f"Un_antecesor_{i[1]}")
 
 # Los nodos con al menos 1 antecesor son todos los nodos no iniciales
 for i in nodos:
-    model.addConstr((quicksum(x[j[0], i[0]]) for j in nodos if i != j) >= (1 - Ni[i[0]]), f"not_Ni_tiene_antecesor_{i[1]}")
+    model.addConstr(quicksum(x[j[0], i[0]] for j in nodos if i != j) >= (1 - Ni[i[0]]), f"not_Ni_tiene_antecesor_{i[1]}")
 
 # El número de nodos iniciales es 1 + los nodos que no están conectados
-model.addConstr((quicksum(Ni[i[0]]) for i in nodos) == 1 + ((quicksum(1 - y[i[0]])) for i in nodos), f"Nodo_sin_antecesor")
+model.addConstr(quicksum(Ni[i[0]] for i in nodos) == 1 + ((quicksum(1 - y[i[0]])) for i in nodos), f"Nodo_sin_antecesor")
 
 # Funcion Objetivo y optimizar el problema:
 
