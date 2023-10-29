@@ -1,7 +1,8 @@
 import leerCSV as CSV
 from gurobipy import Model, GRB, quicksum
 
-presupuesto = input("Elija un presupuesto para el proyecto (en miles de pesos)")
+presupuesto = 5000
+#input("Elija un presupuesto para el proyecto (en millones de pesos)")
 
 nodos = CSV.leer_csv("Datos.csv")
 nodos[0][0] = '0'
@@ -52,6 +53,9 @@ CAx = model.addVar(vtype = GRB.CONTINUOUS, name= f"CAx")
 CAy = model.addVar(vtype = GRB.CONTINUOUS, name= f"CAy")
 #(quicksum(y[i[0]]) for i in nodos)
 
+# Cantidad de estaciones no conectadas:
+NCS = model.addVar(vtype = GRB.CONTINUOUS, name= f"NCS")
+
 # Llamamos a update
 model.update()
 
@@ -80,12 +84,15 @@ for i in nodos:
 model.addConstr(quicksum(Cx[i[0]] for i in nodos) == CAx, f"Rest CAx")
 
 # El costo de todas las estaciones es la suma de esos costos
-model.addConstr(quicksum(y[i[0]] for i in nodos) == CAy, f"Rest CAy")
+model.addConstr(quicksum(y[i[0]]*i[2] for i in nodos) == CAy, f"Rest CAy")
 
 # El costo total es menor al presupuesto
-model.addConstr(CAx + CAy <= presupuesto, f"Rest Costos")
+model.addConstr(CAx <= presupuesto - CAy, f"Rest Costos")
 # Las conexiones no se generan dos veces por la restricción anterior
 
+
+# Las estaciones no conectadas son las estaciones que no están construídas
+model.addConstr(NCS == quicksum(1 - y[i[0]] for i in nodos), f"Rest NCS")
 
 # Los nodos tienen máximo 1 antecesor y tienen 0 si no tienen estación
 for i in nodos:
@@ -96,7 +103,7 @@ for i in nodos:
     model.addConstr(quicksum(x[j[0], i[0]] for j in nodos if i != j) >= (1 - Ni[i[0]]), f"not_Ni_tiene_antecesor_{i[1]}")
 
 # El número de nodos iniciales es 1 + los nodos que no están conectados
-model.addConstr(quicksum(Ni[i[0]] for i in nodos) == 1 + ((quicksum(1 - y[i[0]])) for i in nodos), f"Nodo_sin_antecesor")
+model.addConstr(quicksum(Ni[i[0]] for i in nodos) == 1 + NCS, f"Nodo_sin_antecesor")
 
 # Funcion Objetivo y optimizar el problema:
 
@@ -109,20 +116,30 @@ model.optimize()
 
 # Imprimir solución
 
+q = "======================================================"
+
 # Print the values of x[i,j]
+print(f"{q}\nConexiones:\n{q}")
+k = 0
 for i in nodos:
     for j in nodos:
         if i != j:
-            print(f"x_{i[1]}_{j[1]} =", x[i[0],j[0]].x)
+            if x[i[0],j[0]].x == 1.0:
+                k += 1
+                print(f"{k}) Conex {i[1]} con {j[1]}")
 
 # Print the values of y[i]
+print(f"{q}\nEstaciones:\n{q}")
+k = 0
 for i in nodos:
-    print(f"y_({i[1]}) =", y[i[0]].x)
+    if y[i[0]].x == 1.0:
+        k += 1
+        print(f"{k}) Estación en {i[1]}")
 
+print(f"{q}")
 
 
 tiempo_ejecucion = model.Runtime
 print(tiempo_ejecucion)
 valor_objetivo = model.ObjVal
 print(valor_objetivo)
-print("banana")
