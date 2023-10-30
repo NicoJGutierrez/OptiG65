@@ -29,6 +29,7 @@ for i in range(len(nodos)):
         val = nval
         x = nx
         y = ny
+        j = i
 
 # Imprimir solución
 
@@ -47,3 +48,5 @@ for i in y:
 print(f"{q}")
 
 print(f"Cantidad de gente movida con este sistema: {val}")
+print(f"Nodo inicial optimo: {nodos[j][1]}")
+print(f"Presupuesto elegido: {presupuesto}")
