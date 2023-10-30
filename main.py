@@ -2,15 +2,18 @@ import leerCSV as CSV
 from gurobipy import Model, GRB, quicksum
 from itertools import combinations
 
-presupuesto = 5000
-indice_nodo_inicial = 2
+nodos = CSV.leer_csv("Datos.csv")
+nodos[0][0] = '0'
+
+presupuesto = int(input("Elija un presupuesto para el proyecto (en millones de pesos)"))
+print("Elija una localidad de la cual iniciar la construcción de la red:")
+for i in nodos:
+    print(f"{i[0]}) {i[1]}")
+indice_nodo_inicial = int(input())
 #input("Elija un presupuesto para el proyecto (en millones de pesos)")
 
 # constante arbitrariamente grande:
 ctte = 9999
-
-nodos = CSV.leer_csv("Datos.csv")
-nodos[0][0] = '0'
 
 for i in nodos:
     i[0] = int(i[0])
