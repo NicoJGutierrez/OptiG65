@@ -17,7 +17,7 @@ for e in E:
     for t in T:
         for s in S:
             x[e,t,s] = model.addVar(vtype = GRB.BINARY, name=f"x_{e}_{t}_{s}")
-    y[e] = model.addVar(vtype = GRB.BINARY, name=f"y_{e}")
+    y[e] = model.addVar(lb=-1e10, ub=1e10, name=f"y_{e}")
     z[e] = model.addVar(vtype = GRB.BINARY, name=f"z_{e}")
 
 ## Añadir las resrticciones
