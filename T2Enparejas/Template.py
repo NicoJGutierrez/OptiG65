@@ -38,7 +38,7 @@ for s in S:
 for e in E:
     for s in S:
         model.addConstr(quicksum((x[e,tprima,s] + x[e,tprima + 1,s] + x[e,tprima + 2,s]+ x[e,tprima + 3,s]) 
-                                 for tprima in range(0, len(T)-4, 3)) <= 3, f"No_3_dias_seguidos_${e}_${s}")
+                                 for tprima in range(0, len(T)-4)) <= 3, f"No_3_dias_seguidos_${e}_${s}")
         
 for e in E:
     model.addConstr(quicksum(x[e,t,s] for s in S for t in T) <= D*y[e], f"Limite_dias_normales_${e}")
