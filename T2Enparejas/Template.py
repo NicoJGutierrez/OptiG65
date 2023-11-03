@@ -41,7 +41,7 @@ for e in E:
                                  for tprima in range(0, len(T)-4)) <= 3, f"No_3_dias_seguidos_${e}_${s}")
         
 for e in E:
-    model.addConstr(quicksum(x[e,t,s] for s in S for t in T) <= D*y[e], f"Limite_dias_normales_${e}")
+    model.addConstr(quicksum(x[e,t,s] for s in S for t in T) <= D + y[e], f"Limite_dias_normales_${e}")
     model.addConstr(quicksum(x[e,t,s] for s in S for t in T) >= M*z[e], f"Minimo_de_dias_con_contrato_${e}")
 
 
