@@ -24,7 +24,26 @@ for e in E:
 for e in E:
     for s in S:
         for t in T:
-            model.addConstr(x[e,t,s] - y[i[0]] <= h[e,s], f"Nodo_receptor_${i[1]}")
+            model.addConstr(x[e,t,s] <= h[e,s], f"Habilidades_${e}_${t}_${s}")
+            model.addConstr(x[e,t,s] <= z[e], f"Contratado_${e}_${t}_${s}")
+        
+for e in E:
+    for t in T:
+        model.addConstr(quicksum(x[e,t,s] for s in S) <= 1, f"Una_sola_tarea_diaria_${e}_${t}")
+
+for s in S:
+    for t in T:
+        model.addConstr(quicksum(x[e,t,s] for e in E) >= b[t,s], f"Empleados_requeridos_por_funcion_cada_dia_${t}_${s}")
+
+for e in E:
+    for s in S:
+        model.addConstr(quicksum((x[e,tprima,s] + x[e,tprima + 1,s] + x[e,tprima + 2,s]+ x[e,tprima + 3,s]) 
+                                 for tprima in range(0, len(T)-4, 3)) <= 3, f"No_3_dias_seguidos_${e}_${s}")
+        
+for e in E:
+    model.addConstr(quicksum(x[e,t,s] for s in S for t in T) <= D*y[e], f"Limite_dias_normales_${e}")
+    model.addConstr(quicksum(x[e,t,s] for s in S for t in T) >= M*z[e], f"Minimo_de_dias_con_contrato_${e}")
+
 
 # Añadir función objetivo
 model.setObjective(quicksum((c[e,t,s] * x[e,t,s]) for e in E for t in T for s in S) 
