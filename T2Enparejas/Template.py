@@ -24,25 +24,28 @@ for e in E:
 for e in E:
     for s in S:
         for t in T:
-            model.addConstr(x[e,t,s] <= h[e,s], f"Habilidades_${e}_${t}_${s}")
+            model.addConstr(x[e,t,s] <= h[e,s], f"Habilidades_${e}_${t}_${s}") # 1) Si no tienes la habilidad no te podemos usar
             model.addConstr(x[e,t,s] <= z[e], f"Contratado_${e}_${t}_${s}")
         
 for e in E:
     for t in T:
-        model.addConstr(quicksum(x[e,t,s] for s in S) <= 1, f"Una_sola_tarea_diaria_${e}_${t}")
+        model.addConstr(quicksum(x[e,t,s] for s in S) <= 1, f"Una_sola_tarea_diaria_${e}_${t}") # 2) No más de una tarea por día
+        pass
 
 for s in S:
     for t in T:
-        model.addConstr(quicksum(x[e,t,s] for e in E) >= b[t,s], f"Empleados_requeridos_por_funcion_cada_dia_${t}_${s}")
+        # sin esta queda 1 solucion, pero la restriccion se supone que es que los empleados son requeridos para sus funciones
+        model.addConstr(quicksum(x[e,t,s] for e in E) >= b[t,s], f"Empleados_requeridos_por_funcion_cada_dia_${t}_${s}") # 3) Todas las tareas se cumplen todos los días
+        pass
 
 for e in E:
     for s in S:
         model.addConstr(quicksum((x[e,tprima,s] + x[e,tprima + 1,s] + x[e,tprima + 2,s]+ x[e,tprima + 3,s]) 
-                                 for tprima in range(0, len(T)-4)) <= 3, f"No_3_dias_seguidos_${e}_${s}")
+                                 for tprima in range(0, len(T)-4)) <= 3, f"No_3_dias_seguidos_${e}_${s}") # 4) No más de 3 días seguidos trabajando
         
 for e in E:
-    model.addConstr(quicksum(x[e,t,s] for s in S for t in T) <= D + y[e], f"Limite_dias_normales_${e}")
-    model.addConstr(quicksum(x[e,t,s] for s in S for t in T) >= M*z[e], f"Minimo_de_dias_con_contrato_${e}")
+    model.addConstr(quicksum(x[e,t,s] for s in S for t in T) <= D + y[e], f"Limite_dias_normales_${e}") # 5) Días trabajados = días normales + días extraordinarios
+    model.addConstr(quicksum(x[e,t,s] for s in S for t in T) >= M*z[e], f"Minimo_de_dias_con_contrato_${e}") # 6) Debes trabajar mínimo M días si estás contratado
 
 
 # Añadir función objetivo
@@ -56,5 +59,23 @@ model.optimize()
 
 # Añadir procesamiento de datos
 if model.status == GRB.OPTIMAL:
-    pass
+    # Imprimir semana de las personas a revisar:
+    personas_a_revisar = [0, 5, 14]
+    for e in E:
+        if e in personas_a_revisar:
+            lista_semana = []
+            for t in T:
+                funcion = -1
+                for s in S:
+                    if x[e,t,s]:
+                        funcion = s
+                lista_semana.append(s)
+            print(f"Lista_persona_{e} = {lista_semana}")
+    
+    # Lista de personas contratadas:
+    lista_empleados = []
+    for e in E:
+        if z[e]:
+            lista_empleados.append(e)
+    print(f"Empleados contratados: {lista_empleados}")
     
